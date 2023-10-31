@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This is the logging configuration for the cloud environments which will print in JSON format
+     It is activated via the configuration properties in our config data repository -->
+<configuration>
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>false</includeContext>
+            <includeMdcKeyName>instana.trace.id</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <fieldNames>
+                <version>[ignore]</version>
+                <thread>[ignore]</thread>
+                <levelValue>[ignore]</levelValue>
+                <logger>loggerSource</logger>
+                <stackTrace>stacktrace</stackTrace>
+            </fieldNames>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="JSON"/>
+    </root>
+</configuration>

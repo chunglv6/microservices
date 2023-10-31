@@ -1,0 +1,100 @@
+version: '3.8'
+services:
+  zipkin:
+    image: openzipkin/zipkin
+    restart: on-failure
+    ports:
+    - 9411:9411
+    networks:
+      - chunglv6
+
+  configserver:
+    image: chunglv6/configserver:buildpacks
+    ports:
+    - 8071:8071
+    networks:
+    - chunglv6
+  eurekaserver:
+    image: chunglv6/eurekaserver:buildpacks
+    restart: on-failure
+    ports:
+      - 8070:8070
+    networks:
+      - chunglv6 
+    depends_on:
+      - configserver
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+  gatewayserver:
+    image: chunglv6/gatewayserver:buildpacks
+    restart: on-failure
+    ports:
+      - 8072:8072
+    networks:
+      - chunglv6
+    depends_on:
+      - configserver
+      - eurekaserver
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+      SPRING_ZIPKIN_BASE-URL: http://localhost:9411/
+  accounts:
+    image: chunglv6/accounts:buildpacks
+    restart: on-failure
+    ports:
+    - 8080:8080
+    networks:
+    - chunglv6
+    depends_on:
+      - configserver
+      - eurekaserver
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+      SPRING_ZIPKIN_BASE-URL: http://localhost:9411/
+  loans:
+    image: chunglv6/loans:buildpacks
+    restart: on-failure
+    ports:
+    - 8090:8090
+    networks:
+    - chunglv6
+    depends_on:
+      - configserver
+      - eurekaserver
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+      SPRING_ZIPKIN_BASE-URL: http://localhost:9411/
+  cards:
+    image: chunglv6/cards:buildpacks
+    restart: on-failure
+    ports:
+    - 9000:9000
+    networks:
+    - chunglv6
+    depends_on:
+      - configserver
+      - eurekaserver
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+      SPRING_ZIPKIN_BASE-URL: http://localhost:9411/
+  prometheus:
+    image: prom/prometheus:latest
+    restart: on-failure
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+    - chunglv6
+networks:
+  chunglv6:
+    driver: bridge
